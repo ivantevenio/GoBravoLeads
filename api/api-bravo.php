@@ -97,26 +97,29 @@ while ($intento_actual <= $max_reintentos && !$exito) {
     }
 }
 
-// 4. Salida de respuesta en pantalla (Lo que leerá MDirector)
+// 4. Salida de respuesta segura (Lo que leerá MDirector)
 
 if ($codigo_http == 200) {
-    // Lo guardamos en el log interno de Vercel
-    error_log("✅ ÉXITO: Lead enviado."); 
+    // 1. Guardamos el registro completo y seguro solo en Vercel
+    error_log("✅ ÉXITO: Lead de [$email] enviado."); 
     
-    // Esto es lo que MDirector imprimirá en su pantalla verde
-    echo "HTTP 200 (Éxito) - Respuesta CRM: " . $respuesta_final;
+    // 2. Extraemos el ID que nos dio Opportunitex de forma segura
+    $respuesta_json = json_decode($respuesta_final, true);
+    $lead_id = $respuesta_json['record']['id'] ?? 'ID_NO_ENCONTRADO';
+    
+    // 3. Imprimimos SOLO lo necesario para MDirector (Sin datos personales)
+    echo "HTTP 200 (Éxito) - Lead ID: " . $lead_id;
 
 } else if ($codigo_http == 400) {
-    // Lo guardamos en el log
-    error_log("❌ RECHAZADO: " . $respuesta_final);
+    // Mantenemos el error detallado en el log interno
+    error_log("❌ RECHAZADO: Lead de [$email]. Respuesta: " . $respuesta_final);
     
-    // MDirector imprimirá el motivo del rechazo
-    echo "HTTP 400 (Rechazado) - Motivo: " . $respuesta_final;
+    // Le decimos a MDirector que falló la validación
+    echo "HTTP 400 (Rechazado) - Error de validación de datos.";
 
 } else {
-    error_log("🚨 ERROR CRÍTICO: HTTP $codigo_http");
-    
-    // MDirector imprimirá el error de servidor
-    echo "HTTP $codigo_http (Error Servidor) - Respuesta: " . $respuesta_final;
+    // Fallo grave de servidor
+    error_log("🚨 ERROR CRÍTICO: HTTP $codigo_http. Respuesta: " . $respuesta_final);
+    echo "HTTP $codigo_http (Error) - Fallo de conexión.";
 }
 ?>
