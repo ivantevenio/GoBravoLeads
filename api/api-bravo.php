@@ -97,15 +97,26 @@ while ($intento_actual <= $max_reintentos && !$exito) {
     }
 }
 
-// 4. Sistema de LOGS en Vercel
+// 4. Salida de respuesta en pantalla (Lo que leerá MDirector)
+
 if ($codigo_http == 200) {
-    error_log("✅ ÉXITO: Lead de [$email] enviado correctamente a Opportunitex.");
-    echo "Lead procesado con éxito.";
+    // Lo guardamos en el log interno de Vercel
+    error_log("✅ ÉXITO: Lead enviado."); 
+    
+    // Esto es lo que MDirector imprimirá en su pantalla verde
+    echo "HTTP 200 (Éxito) - Respuesta CRM: " . $respuesta_final;
+
 } else if ($codigo_http == 400) {
-    error_log("❌ RECHAZADO: El CRM rechazó el lead de [$email] por datos inválidos. Respuesta: " . $respuesta_final);
-    echo "Lead rechazado por validación.";
+    // Lo guardamos en el log
+    error_log("❌ RECHAZADO: " . $respuesta_final);
+    
+    // MDirector imprimirá el motivo del rechazo
+    echo "HTTP 400 (Rechazado) - Motivo: " . $respuesta_final;
+
 } else {
-    error_log("🚨 ERROR CRÍTICO: Falló el envío de [$email] después de $max_reintentos intentos. HTTP Final: $codigo_http.");
-    echo "Error interno de conexión.";
+    error_log("🚨 ERROR CRÍTICO: HTTP $codigo_http");
+    
+    // MDirector imprimirá el error de servidor
+    echo "HTTP $codigo_http (Error Servidor) - Respuesta: " . $respuesta_final;
 }
 ?>
