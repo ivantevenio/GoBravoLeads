@@ -56,7 +56,7 @@ $payload = [
 ];
 
 $json_payload = json_encode($payload);
-$endpoint = "https://opportunitex.sandbox.resuelve.io/api/records";
+$endpoint = "https://opportunitex.resuelve.io/api/records";
 
 // 3. Sistema de envío con REINTENTOS
 $max_reintentos = 3;
