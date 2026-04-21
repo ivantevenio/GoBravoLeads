@@ -97,28 +97,44 @@ while ($intento_actual <= $max_reintentos && !$exito) {
     }
 }
 
-// 4. Salida de respuesta segura (Lo que leerá MDirector)
+// 4. Salida de respuesta segura (Lo que leerá MDirector) y envío a Zapier
 
 if ($codigo_http == 200) {
-    // 1. Guardamos el registro completo y seguro solo en Vercel
     error_log("✅ ÉXITO: Lead de [$email] enviado."); 
     
-    // 2. Extraemos el ID que nos dio Opportunitex de forma segura
+    // Extraemos el ID
     $respuesta_json = json_decode($respuesta_final, true);
     $lead_id = $respuesta_json['record']['id'] ?? 'ID_NO_ENCONTRADO';
     
-    // 3. Imprimimos SOLO lo necesario para MDirector (Sin datos personales)
+    // --- NUEVO: ENVIAR EL ID A ZAPIER ---
+    $url_zapier = "https://hooks.zapier.com/hooks/catch/4797659/ujfu1no/"; // Pega aquí tu webhook de Zapier
+    
+    // Preparamos los datos para Zapier (Mandamos el ID y el Email para que puedas identificarlo)
+    $datos_zapier = json_encode([
+        "lead_id" => $lead_id,
+        "email" => $email,
+        "status" => "Registrado en Opportunitex"
+    ]);
+
+    // Hacemos un cURL rápido hacia Zapier
+    $ch_zapier = curl_init($url_zapier);
+    curl_setopt($ch_zapier, CURLOPT_POST, true);
+    curl_setopt($ch_zapier, CURLOPT_POSTFIELDS, $datos_zapier);
+    curl_setopt($ch_zapier, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch_zapier, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch_zapier, CURLOPT_TIMEOUT, 3); // Le damos max 3 segundos para no alentar el proceso
+    curl_exec($ch_zapier);
+    curl_close($ch_zapier);
+    // ------------------------------------
+
+    // Imprimimos la respuesta para MDirector
     echo "HTTP 200 (Éxito) - Lead ID: " . $lead_id;
 
 } else if ($codigo_http == 400) {
-    // Mantenemos el error detallado en el log interno
     error_log("❌ RECHAZADO: Lead de [$email]. Respuesta: " . $respuesta_final);
-    
-    // Le decimos a MDirector que falló la validación
     echo "HTTP 400 (Rechazado) - Error de validación de datos.";
 
 } else {
-    // Fallo grave de servidor
     error_log("🚨 ERROR CRÍTICO: HTTP $codigo_http. Respuesta: " . $respuesta_final);
     echo "HTTP $codigo_http (Error) - Fallo de conexión.";
 }
