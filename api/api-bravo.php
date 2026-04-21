@@ -102,18 +102,29 @@ while ($intento_actual <= $max_reintentos && !$exito) {
 if ($codigo_http == 200) {
     error_log("✅ ÉXITO: Lead de [$email] enviado."); 
     
-    // Extraemos el ID
+   // Extraemos los datos de la respuesta de Opportunitex
     $respuesta_json = json_decode($respuesta_final, true);
     $lead_id = $respuesta_json['record']['id'] ?? 'ID_NO_ENCONTRADO';
+    
+    // EXTRAEMOS LA FECHA OFICIAL DEL CRM 
+    $fecha_creacion = $respuesta_json['record']['data']['date_created'] ?? date("Y-m-d H:i:s");
     
     // --- NUEVO: ENVIAR EL ID A ZAPIER ---
     $url_zapier = "https://hooks.zapier.com/hooks/catch/4797659/ujfu1no/"; // Pega aquí tu webhook de Zapier
     
-    // Preparamos los datos para Zapier (Mandamos el ID y el Email para que puedas identificarlo)
+// Preparamos TODOS los datos para Zapier
     $datos_zapier = json_encode([
-        "lead_id" => $lead_id,
-        "email" => $email,
-        "status" => "Registrado en Opportunitex"
+        "lead_id"          => $lead_id,
+        "fecha_registro"   => $fecha_creacion,
+        "status"           => "Registrado en Opportunitex",
+        "nombre"           => $nombre,
+        "apellido_paterno" => $apellido_paterno,
+        "apellido_materno" => $apellido_materno,
+        "email"            => $email,
+        "celular"          => $celular,
+        "documento_tipo"   => $documento_tipo,
+        "documento_numero" => $documento_numero,
+        "monto"            => $monto
     ]);
 
     // Hacemos un cURL rápido hacia Zapier
